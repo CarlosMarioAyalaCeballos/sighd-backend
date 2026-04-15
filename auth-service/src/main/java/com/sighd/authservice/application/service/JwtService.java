@@ -2,6 +2,8 @@ package com.sighd.authservice.application.service;
 
 import com.sighd.authservice.domain.model.Usuario;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -27,16 +29,21 @@ public class JwtService {
 
     public String generarToken(Usuario usuario) {
         Instant now = Instant.now();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuer("sighd-auth")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expirationSeconds))
                 .subject(usuario.getUsername())
                 .claim("rol", usuario.getRol().name())
-                .claim("usuarioId", usuario.getId())
-                .claim("pacienteId", usuario.getPacienteId())
-                .build();
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+                .claim("usuarioId", usuario.getId());
+
+        if (usuario.getPacienteId() != null) {
+            builder.claim("pacienteId", usuario.getPacienteId());
+        }
+
+        JwtClaimsSet claims = builder.build();
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
     public Jwt validar(String rawToken) {

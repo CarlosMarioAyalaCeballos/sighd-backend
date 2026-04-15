@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 @Configuration
 public class BootstrapAdminConfig {
 
@@ -18,15 +20,23 @@ public class BootstrapAdminConfig {
             PasswordEncoder passwordEncoder,
             @Value("${bootstrap.admin.username:admin}") String username,
             @Value("${bootstrap.admin.password:Admin1234!}") String password,
-            @Value("${bootstrap.admin.rol:ADMIN}") Rol rol
+            @Value("${bootstrap.admin.rol:ADMIN}") Rol rol,
+            @Value("${bootstrap.admin.reset-password:true}") boolean resetPassword
     ) {
         return args -> {
-            if (usuarioRepository.findByUsernameAndActivoTrue(username).isEmpty()) {
+            Optional<Usuario> existing = usuarioRepository.findByUsernameAndActivoTrue(username);
+            if (existing.isEmpty()) {
                 Usuario admin = new Usuario();
                 admin.setUsername(username);
                 admin.setPassword(passwordEncoder.encode(password));
                 admin.setRol(rol);
                 admin.setPacienteId(null);
+                admin.setActivo(true);
+                usuarioRepository.save(admin);
+            } else if (resetPassword) {
+                Usuario admin = existing.get();
+                admin.setPassword(passwordEncoder.encode(password));
+                admin.setRol(rol);
                 admin.setActivo(true);
                 usuarioRepository.save(admin);
             }
