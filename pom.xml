@@ -44,6 +44,7 @@
 		<module>ms-cola</module>
 		<module>ms-atencion</module>
 		<module>ms-admin</module>
+		<module>auth-service</module>
 		<module>api-gateway</module>
 	</modules>
 
